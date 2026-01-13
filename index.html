@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bat Boy Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: skyblue;
+    }
+    #player {
+      position: absolute;
+      bottom: 20px;
+      left: 50px;
+      width: 60px;
+      height: 60px;
+      background: black;
+      border-radius: 10px;
+    }
+    #ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 20px;
+      background: green;
+    }
+  </style>
+</head>
+<body>
+
+<div id="player"></div>
+<div id="ground"></div>
+
+<script>
+  const player = document.getElementById("player");
+  let x = 50;
+  let y = 20;
+  let jumping = false;
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") x += 10;
+    if (e.key === "ArrowLeft") x -= 10;
+    if (e.key === " " && !jumping) jump();
+    player.style.left = x + "px";
+  });
+
+  function jump() {
+    jumping = true;
+    let up = setInterval(() => {
+      y += 10;
+      player.style.bottom = y + "px";
+      if (y >= 120) {
+        clearInterval(up);
+        let down = setInterval(() => {
+          y -= 10;
+          player.style.bottom = y + "px";
+          if (y <= 20) {
+            clearInterval(down);
+            jumping = false;
+          }
+        }, 20);
+      }
+    }, 20);
+  }
+</script>
+
+</body>
+  </html>
