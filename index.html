@@ -7,7 +7,9 @@
       margin: 0;
       overflow: hidden;
       background: skyblue;
+      touch-action: none;
     }
+
     #player {
       position: absolute;
       bottom: 20px;
@@ -17,6 +19,7 @@
       background: black;
       border-radius: 10px;
     }
+
     #ground {
       position: absolute;
       bottom: 0;
@@ -24,45 +27,94 @@
       height: 20px;
       background: green;
     }
+
+    /* Mobile Buttons */
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+
+    .btn {
+      width: 70px;
+      height: 70px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .jump {
+      position: fixed;
+      right: 20px;
+      bottom: 110px;
+    }
   </style>
 </head>
 <body>
 
-<div id="player"></div>
-<div id="ground"></div>
+  <div id="player"></div>
+  <div id="ground"></div>
 
-<script>
-  const player = document.getElementById("player");
-  let x = 50;
-  let y = 20;
-  let jumping = false;
+  <!-- Controls -->
+  <div class="controls">
+    <div class="btn" id="left">◀</div>
+    <div class="btn" id="right">▶</div>
+  </div>
+  <div class="btn jump" id="jump">⤒</div>
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowRight") x += 10;
-    if (e.key === "ArrowLeft") x -= 10;
-    if (e.key === " " && !jumping) jump();
-    player.style.left = x + "px";
-  });
+  <script>
+    const player = document.getElementById("player");
 
-  function jump() {
-    jumping = true;
-    let up = setInterval(() => {
-      y += 10;
-      player.style.bottom = y + "px";
-      if (y >= 120) {
-        clearInterval(up);
-        let down = setInterval(() => {
-          y -= 10;
-          player.style.bottom = y + "px";
-          if (y <= 20) {
-            clearInterval(down);
-            jumping = false;
-          }
-        }, 20);
+    let x = 50;
+    let y = 20;
+    let velocityY = 0;
+    let onGround = true;
+
+    function update() {
+      y += velocityY;
+      velocityY -= 1;
+
+      if (y <= 20) {
+        y = 20;
+        velocityY = 0;
+        onGround = true;
       }
-    }, 20);
-  }
-</script>
+
+      player.style.left = x + "px";
+      player.style.bottom = y + "px";
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+
+    // Move Left
+    document.getElementById("left").addEventListener("touchstart", () => {
+      x -= 20;
+    });
+
+    // Move Right
+    document.getElementById("right").addEventListener("touchstart", () => {
+      x += 20;
+    });
+
+    // Jump
+    document.getElementById("jump").addEventListener("touchstart", () => {
+      if (onGround) {
+        velocityY = 18;
+        onGround = false;
+      }
+    });
+  </script>
 
 </body>
-  </html>
+</html>
