@@ -1,120 +1,127 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Bat Boy Game</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: skyblue;
-      touch-action: none;
+import javafx.animation.*;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.layout.Pane;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
+/* ---------- LEVEL ENUM ---------- */
+enum Level {
+    EASY, NORMAL, HARD, EXTREME, IMPOSSIBLE
+}
+
+/* ---------- LEVEL MANAGER ---------- */
+class LevelManager {
+
+    private boolean[] unlocked = new boolean[5];
+
+    public LevelManager() {
+        unlocked[0] = true; // Only EASY unlocked at start
     }
 
-    #player {
-      position: absolute;
-      bottom: 20px;
-      left: 50px;
-      width: 60px;
-      height: 60px;
-      background: black;
-      border-radius: 10px;
+    public boolean isUnlocked(Level level) {
+        return unlocked[level.ordinal()];
     }
 
-    #ground {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      height: 20px;
-      background: green;
+    public void completeLevel(Level level) {
+        int index = level.ordinal();
+        if (index < unlocked.length - 1) {
+            unlocked[index + 1] = true;
+        }
+    }
+}
+
+/* ---------- MAIN GAME ---------- */
+public class CricketRunGame extends Application {
+
+    LevelManager levelManager = new LevelManager();
+    Level currentLevel = Level.EASY;
+
+    @Override
+    public void start(Stage stage) {
+
+        Pane root = new Pane();
+
+        // Stickman shapes
+        Rectangle bowler = new Rectangle(30, 60);
+        bowler.setLayoutX(50);
+        bowler.setLayoutY(350);
+
+        Rectangle batsman = new Rectangle(30, 60);
+        batsman.setLayoutX(420);
+        batsman.setLayoutY(350);
+
+        // Ball
+        Circle ball = new Circle(8);
+        ball.setLayoutX(80);
+        ball.setLayoutY(350);
+
+        // Play button (hidden first)
+        Button playBtn = new Button("PLAY");
+        playBtn.setLayoutX(230);
+        playBtn.setLayoutY(200);
+        playBtn.setVisible(false);
+
+        root.getChildren().addAll(bowler, batsman, ball, playBtn);
+
+        /* ---------- STEP 2 ANIMATION ---------- */
+
+        TranslateTransition bowlerMove = new TranslateTransition(Duration.seconds(1), bowler);
+        bowlerMove.setByY(-100);
+
+        TranslateTransition ballToBatsman = new TranslateTransition(Duration.seconds(1), ball);
+        ballToBatsman.setByX(320);
+        ballToBatsman.setByY(-100);
+
+        TranslateTransition batsmanMove = new TranslateTransition(Duration.seconds(1), batsman);
+        batsmanMove.setByY(-100);
+
+        TranslateTransition ballHitScreen = new TranslateTransition(Duration.seconds(1), ball);
+        ballHitScreen.setByY(-200);
+
+        PauseTransition showPlay = new PauseTransition(Duration.seconds(0.5));
+        showPlay.setOnFinished(e -> playBtn.setVisible(true));
+
+        SequentialTransition animation = new SequentialTransition(
+                bowlerMove,
+                ballToBatsman,
+                batsmanMove,
+                ballHitScreen,
+                showPlay
+        );
+
+        animation.play();
+
+        /* ---------- PLAY BUTTON LOGIC ---------- */
+
+        playBtn.setOnAction(e -> {
+            if (levelManager.isUnlocked(currentLevel)) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Level Started");
+                alert.setHeaderText(null);
+                alert.setContentText("Playing level: " + currentLevel);
+                alert.showAndWait();
+
+                // Level completed
+                levelManager.completeLevel(currentLevel);
+
+                // Move to next level
+                if (currentLevel != Level.IMPOSSIBLE) {
+                    currentLevel = Level.values()[currentLevel.ordinal() + 1];
+                }
+            }
+        });
+
+        stage.setScene(new Scene(root, 550, 420));
+        stage.setTitle("Cricket Run Game");
+        stage.show();
     }
 
-    /* Mobile Buttons */
-    .controls {
-      position: fixed;
-      bottom: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 20px;
-      box-sizing: border-box;
+    public static void main(String[] args) {
+        launch(args);
     }
-
-    .btn {
-      width: 70px;
-      height: 70px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      font-size: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-    }
-
-    .jump {
-      position: fixed;
-      right: 20px;
-      bottom: 110px;
-    }
-  </style>
-</head>
-<body>
-
-  <div id="player"></div>
-  <div id="ground"></div>
-
-  <!-- Controls -->
-  <div class="controls">
-    <div class="btn" id="left">◀</div>
-    <div class="btn" id="right">▶</div>
-  </div>
-  <div class="btn jump" id="jump">⤒</div>
-
-  <script>
-    const player = document.getElementById("player");
-
-    let x = 50;
-    let y = 20;
-    let velocityY = 0;
-    let onGround = true;
-
-    function update() {
-      y += velocityY;
-      velocityY -= 1;
-
-      if (y <= 20) {
-        y = 20;
-        velocityY = 0;
-        onGround = true;
-      }
-
-      player.style.left = x + "px";
-      player.style.bottom = y + "px";
-
-      requestAnimationFrame(update);
-    }
-
-    update();
-
-    // Move Left
-    document.getElementById("left").addEventListener("touchstart", () => {
-      x -= 20;
-    });
-
-    // Move Right
-    document.getElementById("right").addEventListener("touchstart", () => {
-      x += 20;
-    });
-
-    // Jump
-    document.getElementById("jump").addEventListener("touchstart", () => {
-      if (onGround) {
-        velocityY = 18;
-        onGround = false;
-      }
-    });
-  </script>
-
-</body>
-</html>
+}
